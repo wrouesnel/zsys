@@ -7,6 +7,9 @@ zsys-compat (0.6.0) noble; urgency=medium
     panicked opening pools with ZFS 2.4.
   * Depend on zfsutils-linux or openzfs-zfsutils, and zfs-zed or
     openzfs-zfs-zed. Provide, replace and conflict with zsys.
+  * Don't start snapshot garbage collection when installing or upgrading
+    the package. It destroys datasets, so it only runs from its timer
+    after the next boot, or when asked with zsysctl service gc.
 
  -- Will Rouesnel <wrouesnel@wrouesnel.com>  Wed, 07 Oct 2026 07:33:27 +1100
 
