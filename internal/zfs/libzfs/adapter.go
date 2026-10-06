@@ -1,60 +1,104 @@
 package libzfs
 
-import (
-	golibzfs "github.com/bicomsystems/go-libzfs"
-)
+// Prop enumerates the native ZFS properties zsys reads or sets.
+// Values are internal to zsys and are translated to property names when talking to ZFS.
+type Prop int
 
-type (
-	// Prop type to enumerate all different properties supported by ZFS
-	Prop = golibzfs.Prop
-	// Property ZFS pool or dataset property value
-	Property = golibzfs.Property
-	// Pool object represents handler to single ZFS pool Pool.Properties map[string]Property Map of all ZFS pool properties,
-	// changing any of this will not affect ZFS pool, for that use SetProperty( name, value string) method of the pool object.
-	Pool = golibzfs.Pool
-	// PoolProperties type is map of pool properties name -> value
-	PoolProperties = golibzfs.PoolProperties
-	// VDevTree ZFS virtual device tree
-	VDevTree = golibzfs.VDevTree
-	// Dataset - ZFS dataset object
-	Dataset = golibzfs.Dataset
-	// DatasetType defines enum of dataset types
-	DatasetType = golibzfs.DatasetType
-	// DatasetProperties type is map of dataset or volume properties prop -> value
-	DatasetProperties = golibzfs.DatasetProperties
+// Property is a ZFS pool or dataset property value with its source.
+type Property struct {
+	Value  string
+	Source string
+}
+
+// PoolProperties maps pool properties to values.
+type PoolProperties map[Prop]string
+
+// DatasetProperties maps dataset properties to values.
+type DatasetProperties map[Prop]string
+
+// VDevType is the type of a virtual device.
+type VDevType string
+
+// VDevTree describes the virtual devices of a pool to create.
+type VDevTree struct {
+	Type    VDevType
+	Devices []VDevTree
+	Path    string
+}
+
+// DatasetType is the type of a dataset.
+type DatasetType int
+
+// Pool is a ZFS pool with the properties zsys uses.
+type Pool struct {
+	Properties []Property
+	name       string
+}
+
+// Dataset is a ZFS dataset with the properties zsys uses and its children.
+type Dataset struct {
+	Type       DatasetType
+	Properties map[Prop]Property
+	Children   []Dataset
+
+	userProperties map[string]Property
+	createTXG      uint64
+}
+
+// IsSnapshot returns true if the dataset is a snapshot
+func (d *Dataset) IsSnapshot() bool {
+	return d.Type == DatasetTypeSnapshot
+}
+
+// Close releases the dataset. Nothing is held between commands.
+func (d *Dataset) Close() {}
+
+const (
+	// DatasetPropType is never read nor set: it keeps the zero value of Prop meaning "no native property".
+	DatasetPropType Prop = iota
+	// DatasetPropName is the name of the dataset
+	DatasetPropName
+	// DatasetPropCanmount is the canmount property of the dataset
+	DatasetPropCanmount
+	// DatasetPropMountpoint is the mountpoint of the dataset
+	DatasetPropMountpoint
+	// DatasetPropOrigin is the origin of the dataset
+	DatasetPropOrigin
+	// DatasetPropMounted is the mounted property for the dataset
+	DatasetPropMounted
+	// DatasetPropCreation is the creation time property for the dataset
+	DatasetPropCreation
+	// DatasetPropVolsize is the volume size property for the dataset
+	DatasetPropVolsize
 )
 
 const (
+	// PoolPropName is the name of the pool
+	PoolPropName Prop = iota
 	// PoolPropAltroot ZFS Pool property
-	PoolPropAltroot = golibzfs.PoolPropAltroot
+	PoolPropAltroot
 	// PoolPropCapacity ZFS Pool property
-	PoolPropCapacity = golibzfs.PoolPropCapacity
+	PoolPropCapacity
 	// PoolNumProps is the end pool number property
-	PoolNumProps = golibzfs.PoolNumProps
+	PoolNumProps
+)
+
+const (
 	// VDevTypeFile is the vdevtype on file
-	VDevTypeFile = golibzfs.VDevTypeFile
+	VDevTypeFile VDevType = "file"
+)
+
+const (
 	// DatasetTypeFilesystem - file system dataset
-	DatasetTypeFilesystem = golibzfs.DatasetTypeFilesystem
+	DatasetTypeFilesystem DatasetType = 1 << iota
 	// DatasetTypeSnapshot - snapshot of dataset
-	DatasetTypeSnapshot = golibzfs.DatasetTypeSnapshot
+	DatasetTypeSnapshot
 	// DatasetTypeVolume - volume (virtual block device) dataset
-	DatasetTypeVolume = golibzfs.DatasetTypeVolume
+	DatasetTypeVolume
+	// DatasetTypePool - pool dataset
+	DatasetTypePool
 	// DatasetTypeBookmark - bookmark dataset
-	DatasetTypeBookmark = golibzfs.DatasetTypeBookmark
-	// DatasetPropName is the name of the dataset
-	DatasetPropName = golibzfs.DatasetPropName
-	// DatasetPropCanmount is the canmount property of the dataset
-	DatasetPropCanmount = golibzfs.DatasetPropCanmount
-	// DatasetPropMountpoint is the mountpoint of the dataset
-	DatasetPropMountpoint = golibzfs.DatasetPropMountpoint
-	// DatasetPropOrigin is the origin of the dataset
-	DatasetPropOrigin = golibzfs.DatasetPropOrigin
-	// DatasetPropMounted is the mounted property for the dataset
-	DatasetPropMounted = golibzfs.DatasetPropMounted
-	// DatasetPropCreation is the creation time property for the dataset
-	DatasetPropCreation = golibzfs.DatasetPropCreation
-	// DatasetPropVolsize is the volume size property for the dataset
-	DatasetPropVolsize = golibzfs.DatasetPropVolsize
+	DatasetTypeBookmark
 )
 
 const (

@@ -3,7 +3,6 @@ module github.com/ubuntu/zsys
 go 1.21
 
 require (
-	github.com/bicomsystems/go-libzfs v0.3.3
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/google/go-cmp v0.6.0
@@ -33,5 +32,3 @@ require (
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
-
-replace github.com/bicomsystems/go-libzfs => github.com/ubuntu/go-libzfs v0.2.2-0.20230711233110-6b487f8211c2
