@@ -1,30 +1,38 @@
-Source: zsys
+Source: zsys-compat
 Section: admin
 Priority: optional
-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Maintainer: Will Rouesnel <wrouesnel@wrouesnel.com>
+XSBC-Original-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 Build-Depends: debhelper-compat (= 13),
                dh-apport,
                dh-golang,
-               golang-go,
-               libzfslinux-dev (>= 2.1.99),
-               zfsutils-linux,
+               golang-go (>= 2:1.21~),
                grub2-common,
                dbus,
 Standards-Version: 4.1.3
 Rules-Requires-Root: no
 XS-Go-Import-Path: github.com/ubuntu/zsys
-Homepage: https://github.com/ubuntu/zsys
+Homepage: https://github.com/wrouesnel/zsys
+Vcs-Git: https://github.com/wrouesnel/zsys.git
+Vcs-Browser: https://github.com/wrouesnel/zsys
 
-Package: zsys
+Package: zsys-compat
 Architecture: amd64 arm64 ppc64el riscv64
 Built-Using: ${misc:Built-Using},
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          grub2-common,
-         zfs-zed,
-Recommends: zfsutils-linux,
-Description: ZFS SYStem integration
+         zfsutils-linux | openzfs-zfsutils | openzfsutils,
+         zfs-zed | openzfs-zfs-zed,
+Provides: zsys (= ${binary:Version}),
+Conflicts: zsys,
+Replaces: zsys,
+Description: ZFS SYStem integration for any ZFS packaging
  ZSYS is a Zfs SYStem tool targetting an enhanced ZOL experience.
  It allows running multiple ZFS system in parallels on the same machine,
  get automated snapshots, managing complex zfs dataset layouts separating
  user data from system and persistent data, and more.
+ .
+ This build drives ZFS through the zfs and zpool commands instead of linking
+ libzfs, so it works with Ubuntu's ZFS packages as well as upstream OpenZFS
+ packages and future OpenZFS releases. It replaces the zsys package.

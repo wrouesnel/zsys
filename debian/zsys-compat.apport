@@ -10,7 +10,7 @@ import os
 import apport.hookutils
 
 def add_info(report):
-    apport.hookutils.attach_related_packages(report, ["zfs-initramfs", "zfsutils-linux"])
+    apport.hookutils.attach_related_packages(report, ["zfs-initramfs", "zfsutils-linux", "openzfs-zfs-initramfs", "openzfs-zfsutils"])
     report['ZFSModules'] = get_zfs_kernel_modules()
 
     apport.hookutils.attach_file(report, '/proc/cmdline', 'ProcKernelCmdLine')

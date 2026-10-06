@@ -1,3 +1,15 @@
+zsys-compat (0.6.0) noble; urgency=medium
+
+  * Fork as zsys-compat, which works with Ubuntu's ZFS packages as well
+    as upstream OpenZFS packages.
+  * Drive ZFS through the zfs and zpool commands instead of linking
+    libzfs, whose ABI changes with every OpenZFS release. go-libzfs also
+    panicked opening pools with ZFS 2.4.
+  * Depend on zfsutils-linux or openzfs-zfsutils, and zfs-zed or
+    openzfs-zfs-zed. Provide, replace and conflict with zsys.
+
+ -- Will Rouesnel <wrouesnel@wrouesnel.com>  Wed, 07 Oct 2026 07:33:27 +1100
+
 zsys (0.5.11.3) noble; urgency=medium
 
   * Upgrade vendored dependencies.

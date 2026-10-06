@@ -6,7 +6,7 @@ export GOFLAGS=-ldflags=-X=github.com/ubuntu/zsys/internal/config.Version=$(shel
 export DH_GOLANG_INSTALL_ALL=1
 
 # Tell go generate to only install on-the-fly assets
-export ZSYS_GENERATE_ONLY_INSTALL_SHARE_PREFIX=$(CURDIR)/debian/zsys/usr/share
+export ZSYS_GENERATE_ONLY_INSTALL_SHARE_PREFIX=$(CURDIR)/debian/zsys-compat/usr/share
 
 %:
 	dh $@ --buildsystem=golang --with=golang,apport
@@ -19,12 +19,12 @@ override_dh_auto_clean:
 override_dh_auto_install:
 	dh_auto_install -- --no-source
 	# install in /sbin
-	mv debian/zsys/usr/bin/ debian/zsys/sbin
-	rmdir debian/zsys/usr/
+	mv debian/zsys-compat/usr/bin/ debian/zsys-compat/sbin
+	rmdir debian/zsys-compat/usr/
 	# create zsysctl command
-	ln -s zsysd debian/zsys/sbin/zsysctl
+	ln -s zsysd debian/zsys-compat/sbin/zsysctl
 	# run go generate for only installed generated assets
 	# TODO this sometimes fails on ppc64le
 	go generate $(GOFLAGS) ./...
-	ls -latr debian/zsys/usr/share/locale/de/LC_MESSAGES/
-	ls -latr debian/zsys/usr/share/locale/fr/LC_MESSAGES/
+	ls -latr debian/zsys-compat/usr/share/locale/de/LC_MESSAGES/
+	ls -latr debian/zsys-compat/usr/share/locale/fr/LC_MESSAGES/

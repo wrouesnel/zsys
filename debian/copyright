@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: zsys
-Source: https://github.com/ubuntu/zsys
+Source: https://github.com/wrouesnel/zsys
 
 Files: *
 Copyright: 2019 Canonical Ltd.
@@ -23,10 +23,6 @@ License: GPL-3
 Files: vendor/gopkg.in/yaml.v2
 Copyright: 2011-2016 Canonical Ltd.
 License: Apache-2.0
-
-Files: vendor/github.com/bicomsystems/go-libzfs
-Copyright: 2015 Faruk Kasumovic
-License: BSD-3
 
 Files: vendor/github.com/google/go-cmp
 Copyright: 2017 The Go Authors
