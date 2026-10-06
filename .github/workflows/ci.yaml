@@ -1,0 +1,81 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Code quality and module files
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Code formatting
+        run: |
+          FMT=$(gofmt -l .)
+          echo "$FMT"
+          [ -z "$FMT" ]
+      - name: Module files are tidy
+        run: |
+          go mod tidy
+          ./.github/ci/check-modules
+      - name: Report suspicious constructs
+        run: go vet ./...
+
+  tests:
+    name: Tests with mocks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install dependencies
+        run: sudo apt-get install -y dbus gettext
+      - name: Run tests
+        run: go test ./...
+      - name: Run tests with race detector
+        run: go test -race ./...
+
+  system-zfs-tests:
+    name: Tests with system ZFS
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install ZFS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zfsutils-linux dbus gettext
+          sudo modprobe zfs
+          zfs version
+      - name: Run tests on file-backed pools
+        run: sudo env "PATH=$PATH" go test -count=1 ./... -with-system-zfs
+
+  package:
+    name: Package for ${{ matrix.series }}
+    runs-on: ubuntu-24.04
+    container: ubuntu:${{ matrix.series }}
+    strategy:
+      fail-fast: false
+      matrix:
+        series: [noble, resolute]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build source and binary packages
+        run: ./.github/ci/build-package dist
+      - name: Install the package
+        run: apt-get install -y ./dist/*.deb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.series }}
+          path: dist/

@@ -1,0 +1,70 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  ppa:
+    name: Upload to PPA for ${{ matrix.series }}
+    runs-on: ubuntu-24.04
+    container: ubuntu:${{ matrix.series }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - series: noble
+            release: '24.04'
+          - series: resolute
+            release: '26.04'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag matches the package version
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends dpkg-dev >/dev/null
+          version="$(dpkg-parsechangelog -S Version)"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} doesn't match debian/changelog version ${version}"
+            exit 1
+          fi
+      - name: Set the version for ${{ matrix.series }}
+        run: |
+          apt-get install -y -qq --no-install-recommends devscripts >/dev/null
+          version="$(dpkg-parsechangelog -S Version)"
+          DEBFULLNAME="Will Rouesnel" DEBEMAIL="wrouesnel@wrouesnel.com" \
+            dch -v "${version}~ubuntu${{ matrix.release }}.1" -D "${{ matrix.series }}" --force-distribution \
+            "Build for ${{ matrix.series }}."
+      - name: Build source and binary packages
+        run: ./.github/ci/build-package dist
+      - name: Sign and upload the source package
+        env:
+          PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
+          PACKAGE_SIGNING_KEY_PASSPHRASE: ${{ secrets.PACKAGE_SIGNING_KEY_PASSPHRASE }}
+          PACKAGE_SIGNING_KEY_FINGERPRINT: ${{ vars.PACKAGE_SIGNING_KEY_FINGERPRINT }}
+        run: |
+          apt-get install -y -qq --no-install-recommends dput gnupg >/dev/null
+          export GNUPGHOME="$(mktemp -d)"
+          trap 'rm -rf "$GNUPGHOME"' EXIT
+          echo "$PACKAGE_SIGNING_KEY" | gpg --batch --import
+          printf '%s' "$PACKAGE_SIGNING_KEY_PASSPHRASE" > "$GNUPGHOME/passphrase"
+          debsign -k"$PACKAGE_SIGNING_KEY_FINGERPRINT" \
+            -p"gpg --batch --pinentry-mode loopback --passphrase-file $GNUPGHOME/passphrase" \
+            --re-sign dist/*_source.changes
+          dput ppa:w-rouesnel/zsys dist/*_source.changes
+
+  github-release:
+    name: GitHub release
+    needs: ppa
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" --verify-tag --generate-notes --title "${GITHUB_REF_NAME}"

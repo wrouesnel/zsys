@@ -1,0 +1,26 @@
+#!/bin/bash
+# Builds the source package, then the binary packages from it without network access to Go modules,
+# as Launchpad builders do. Run as root in a container of the target Ubuntu series.
+# Output goes to the directory given as first argument.
+set -euo pipefail
+
+out="$(realpath "${1:?output directory}")"
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq
+apt-get install -y -qq --no-install-recommends devscripts equivs build-essential git ca-certificates >/dev/null
+mk-build-deps -i -r -t "apt-get -y -qq --no-install-recommends" debian/control >/dev/null
+
+# Source package, vendoring Go modules
+dpkg-buildpackage -S -d -us -uc
+# Created after building the source package so that it isn't part of it
+mkdir -p "$out"
+src="$(dpkg-parsechangelog -S Source)"
+version="$(dpkg-parsechangelog -S Version)"
+mv "../${src}_${version}.dsc" "../${src}_${version}.tar.xz" "../${src}_${version}_source."* "$out/"
+
+# Binary packages from the source package only
+build="$(mktemp -d)"
+dpkg-source -x "$out/${src}_${version}.dsc" "$build/src"
+(cd "$build/src" && GOPROXY=off GOFLAGS=-mod=vendor dpkg-buildpackage -b -us -uc)
+mv "$build"/*.deb "$build"/*.buildinfo "$build"/*.changes "$out/"

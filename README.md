@@ -1,10 +1,40 @@
-# ZSys
+# ZSys (zsys-compat)
 ZSys daemon and client for zfs systems
 
-[![Code quality](https://github.com/ubuntu/zsys/workflows/CI/badge.svg)](https://github.com/ubuntu/zsys/actions?query=workflow%3ACI)
-[![Go Report Card](https://goreportcard.com/badge/ubuntu/zsys)](https://goreportcard.com/report/ubuntu/zsys)
-[![codecov](https://codecov.io/gh/ubuntu/zsys/branch/master/graph/badge.svg)](https://codecov.io/gh/ubuntu/zsys)
-[![License](https://img.shields.io/badge/License-GPL3.0-blue.svg)](https://github.com/ubuntu/zsys/blob/master/LICENSE)
+[![CI](https://github.com/wrouesnel/zsys/actions/workflows/ci.yaml/badge.svg)](https://github.com/wrouesnel/zsys/actions/workflows/ci.yaml)
+[![License](https://img.shields.io/badge/License-GPL3.0-blue.svg)](https://github.com/wrouesnel/zsys/blob/master/LICENSE)
+
+This is a maintained fork of [ubuntu/zsys](https://github.com/ubuntu/zsys), packaged as `zsys-compat`.
+Upstream zsys links libzfs, whose ABI changes with every OpenZFS release, so it only works with the ZFS
+packages it was built against (and its go-libzfs bindings crash with OpenZFS 2.4). This fork drives ZFS
+through the `zfs` and `zpool` commands instead, so the same package works with:
+
+- Ubuntu's ZFS packages (`zfsutils-linux`, `zfs-zed`),
+- upstream OpenZFS packages (`openzfs-zfsutils`, `openzfs-zfs-zed`), as built by OpenZFS's `make native-deb`,
+- future OpenZFS releases.
+
+The `zsys-compat` package provides, conflicts with and replaces `zsys`, so it installs over Ubuntu's
+package and satisfies anything depending on it.
+
+## Installation
+
+Packages for Ubuntu 24.04 (noble) and 26.04 (resolute) are published in the
+[`ppa:w-rouesnel/zsys`](https://launchpad.net/~w-rouesnel/+archive/ubuntu/zsys) PPA:
+
+```sh
+sudo add-apt-repository ppa:w-rouesnel/zsys
+sudo apt update
+sudo apt install zsys-compat
+```
+
+Installing `zsys-compat` removes Ubuntu's `zsys` package if it's installed, keeping its configuration.
+
+## Releasing
+
+Pushing a `v<version>` tag matching the version in `debian/changelog` uploads a source package for each
+supported Ubuntu series to the PPA (versioned `<version>~ubuntu<release>.1`), then creates a GitHub
+release. Uploads are signed with the Launchpad signing key `2A128435A6FE8BD751AA578720959AB807096ADB`,
+from the `PACKAGE_SIGNING_KEY` and `PACKAGE_SIGNING_KEY_PASSPHRASE` secrets.
 
 ZSys is a Zfs SYStem tool targeting an enhanced ZOL experience.
 
