@@ -59,7 +59,8 @@ jobs:
           sudo modprobe zfs
           zfs version
       - name: Run tests on file-backed pools
-        run: sudo env "PATH=$PATH" go test -count=1 ./... -with-system-zfs
+        # Only packages using testutils define -with-system-zfs
+        run: sudo env "PATH=$PATH" go test -count=1 $(go list ./... | grep -v '/internal/zfs/libzfs$') -with-system-zfs
 
   package:
     name: Package for ${{ matrix.series }}
