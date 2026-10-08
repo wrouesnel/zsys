@@ -123,6 +123,16 @@ func (a Adapter) PoolCreate(name string, vdev VDevTree, features map[string]stri
 	if _, err := run("zpool", args...); err != nil {
 		return pool, err
 	}
+	// zpool create mounts the root dataset, unlike libzfs
+	out, err := run("zfs", "get", "-Hp", "-o", "value", "mounted", name)
+	if err != nil {
+		return pool, err
+	}
+	if strings.TrimSpace(out) == "yes" {
+		if _, err := run("zfs", "unmount", name); err != nil {
+			return pool, err
+		}
+	}
 	return a.PoolOpen(name)
 }
 
