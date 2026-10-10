@@ -32,12 +32,14 @@ jobs:
             exit 1
           fi
       - name: Set the version for ${{ matrix.series }}
+        # Rewrite the top changelog entry rather than adding one: <version>~ubuntu<release>.1 sorts before
+        # <version>, so dch refuses it as a new entry.
         run: |
-          apt-get install -y -qq --no-install-recommends devscripts >/dev/null
+          source="$(dpkg-parsechangelog -S Source)"
           version="$(dpkg-parsechangelog -S Version)"
-          DEBFULLNAME="Will Rouesnel" DEBEMAIL="wrouesnel@wrouesnel.com" \
-            dch -v "${version}~ubuntu${{ matrix.release }}.1" -D "${{ matrix.series }}" --force-distribution \
-            "Build for ${{ matrix.series }}."
+          sed -i "1s/.*/${source} (${version}~ubuntu${{ matrix.release }}.1) ${{ matrix.series }}; urgency=medium/" debian/changelog
+          dpkg-parsechangelog -S Version
+          dpkg-parsechangelog -S Distribution
       - name: Build source and binary packages
         run: ./.github/ci/build-package dist
       - name: Sign and upload the source package
